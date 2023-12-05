@@ -30,3 +30,5 @@ minList (x : xs) = foldl min x xs
 indexOf :: (Eq a) => [a] -> [a] -> Maybe Int
 indexOf sub str = findIndex (isPrefixOf sub) (tails str)
 
+pair :: [a] -> (a, a)
+pair [x, y] = (x, y)

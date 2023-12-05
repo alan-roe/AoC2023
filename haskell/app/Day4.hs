@@ -1,6 +1,5 @@
 module Day4 where
 
-import Control.Arrow ((&&&), (***))
 import Util
 
 type WinningNumbers = [Int]
@@ -18,18 +17,25 @@ test =
     "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"
   ]
 
-pair :: [b] -> (b, b)
-pair [a, b] = (a, b)
-
 loadCard :: [Char] -> Card
-loadCard = (fmap read *** fmap read) . pair . splitAtAll "|" . drop 2 . splitAtAll ' '
+loadCard = pair . fmap (fmap read) . splitAtAll "|" . drop 2 . splitAtAll ' '
 
 winningNumbers :: Card -> CardNumbers
-winningNumbers (win, card) = filter (`elem` win) card
+winningNumbers = uncurry (filter . flip elem)
 
 doubleEach :: Int -> Int
 doubleEach 0 = 0
-doubleEach n = 2 ^ (n-1) 
+doubleEach n = 2 ^ (n - 1)
+
+countCards :: [Card] -> Int
+countCards cards = cardsLen + (calcWins cardsLen . fmap (length . winningNumbers)) cards
+  where
+    cardsLen = length cards
+    
+    calcWins :: Int -> [Int] -> Int
+    calcWins 0 _ = 0
+    calcWins limit (wins : rest) = wins + calcWins wins rest + calcWins (limit - 1) rest
 
 day4_1 = show . sum . fmap (doubleEach . length . winningNumbers . loadCard) . lines
-day4_2 s = show 0
+
+day4_2 = show . countCards . fmap loadCard . lines
