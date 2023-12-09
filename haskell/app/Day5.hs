@@ -2,16 +2,19 @@
 
 module Day5 where
 
-import Text.RawString.QQ
-import Util
 import Control.Monad (join)
 import Data.List (sortBy)
+import Text.RawString.QQ
+import Util
 
 type Seed = Int
+
 type Location = Int
+
 data Almanac = Almanac [Seed] (Seed -> Location)
 
-test = [r|seeds: 79 14 55 13
+test =
+  [r|seeds: 79 14 55 13
 
 seed-to-soil map:
 50 98 2

@@ -31,7 +31,7 @@ countCards :: [Card] -> Int
 countCards cards = cardsLen + (calcWins cardsLen . fmap (length . winningNumbers)) cards
   where
     cardsLen = length cards
-    
+
     calcWins :: Int -> [Int] -> Int
     calcWins 0 _ = 0
     calcWins limit (wins : rest) = wins + calcWins wins rest + calcWins (limit - 1) rest

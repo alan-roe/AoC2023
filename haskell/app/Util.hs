@@ -1,9 +1,9 @@
 module Util where
 
-import Data.List (elemIndex, groupBy, isInfixOf, findIndex, isPrefixOf, tails)
+import Data.List (elemIndex, findIndex, groupBy, isInfixOf, isPrefixOf, tails)
 
 -- Splits a list into a list of lists at each point that a occurs, discards the a token
-splitAtAll :: Eq a => a -> [a] -> [[a]]
+splitAtAll :: (Eq a) => a -> [a] -> [[a]]
 splitAtAll x xs = filter (\y -> head y /= x) $ groupBy (\a b -> a /= x && b /= x) xs
 
 replace :: (Eq a) => a -> a -> [a] -> [a]
@@ -17,7 +17,7 @@ elemIndex' x xs = case elemIndex x xs of
 swap :: (b, a) -> (a, b)
 swap (x, y) = (y, x)
 
-contains :: Eq a => [a] -> [a] -> Bool
+contains :: (Eq a) => [a] -> [a] -> Bool
 contains = isInfixOf
 
 mcons :: Maybe a -> [a] -> [a]
