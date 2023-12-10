@@ -1,17 +1,21 @@
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TupleSections #-}
 
 module Day5 where
 
-import Control.Monad (join)
-import Data.List (sortBy)
+import Control.Arrow ((&&&))
 import Text.RawString.QQ
 import Util
 
 type Seed = Int
 
-type Location = Int
+type Range = (Seed, Seed)
 
-data Almanac = Almanac [Seed] (Seed -> Location)
+type Locations = [Range]
+
+type Transform = (Int, Range)
+
+type Almanac = ([Range], [[Transform]])
 
 test =
   [r|seeds: 79 14 55 13
@@ -48,39 +52,60 @@ humidity-to-location map:
 60 56 37
 56 93 4|]
 
-seeds :: Almanac -> [Seed]
-seeds (Almanac seeds _) = seeds
-
-locations :: Almanac -> [Location]
-locations (Almanac a f) = fmap f a
-
-loadAlmanac :: [String] -> Almanac
-loadAlmanac alm = Almanac ((fmap read . drop 1 . splitAtAll ' ' . head) (head spl)) (loadLocations (tail spl))
+loadSeeds :: String -> [Range]
+loadSeeds = fmap (\x -> (x, x + 1)) . parse
   where
-    spl = splitAtAll "" alm
+    parse = fmap read . drop 1 . splitAtAll ' '
 
-createPipe :: [Int] -> (Seed -> Location)
-createPipe [dest, src, range] seed =
-  if seed >= src && seed < src + range
-    then seed - src + dest
-    else seed
-createPipe xs s = error $ show xs
+makeRange :: (Num b) => [b] -> [(b, b)]
+makeRange [] = []
+makeRange (x : y : rest) = (x, x + y) : makeRange rest
 
-createPipes :: [[Int]] -> (Seed -> Location)
-createPipes [s] seed = createPipe s seed
-createPipes (s : ss) seed =
-  if transform == seed
-    then createPipes ss seed
-    else transform
+loadSeeds2 :: String -> [Range]
+loadSeeds2 = makeRange . parse
   where
-    transform = createPipe s seed
+    parse = fmap read . drop 1 . splitAtAll ' '
 
-sortByIndex :: Int -> [[Int]] -> [[Int]]
-sortByIndex i = sortBy (flip (\x y -> compare (head x) (head y)))
+loadTransforms :: [String] -> [Transform]
+loadTransforms = fmap ((\[dest, src, range] -> (dest, (src, src + range))) . fmap read . splitAtAll ' ')
 
-loadLocations :: [[String]] -> (Seed -> Location)
-loadLocations s = foldr1 (.) $ reverse (fmap (createPipes . fmap (fmap read . splitAtAll ' ') . drop 1) s)
+loadAlmanac :: (String -> [Range]) -> [String] -> Almanac
+loadAlmanac loadSeeds = loadSeeds . head &&& fmap (loadTransforms . drop 1) . splitAtAll "" . tail
 
-day5_1 = show . minList . locations . loadAlmanac . lines
+within :: Range -> Range -> Bool
+within (start, end) (start', end') = start >= start' && end <= end'
 
-day5_2 s = show 0
+splitRange :: Range -> Range -> [Range]
+splitRange r1@(start, end) r2@(start', end')
+  | within r1 r2 || start >= end' || end <= start' = [r1]
+  | start < start' = (start, start') : splitRange (start', end) r2
+  | end > end' = [(start, end'), (end', end)]
+
+createPipe :: Transform -> (Range -> [(Bool, Range)])
+createPipe (dest, transformRange@(src, end)) seedRange =
+  fmap
+    ( \range@(rstart, rend) ->
+        if range `within` transformRange
+          then (True, (rstart - src + dest, rend - src + dest))
+          else (False, range)
+    )
+    (splitRange seedRange transformRange)
+
+createPipes :: [Transform] -> (Range -> Locations)
+createPipes [t] range = snd <$> createPipe t range
+createPipes (t@(dest, tRange) : ts) range =
+  (snd <$> filter fst transform) ++ (createPipes ts . snd =<< filter (not . fst) transform)
+  where
+    transform = createPipe t range
+    destRange = (dest, dest + (snd tRange - fst tRange))
+
+processSeed :: Range -> [[Transform]] -> [Range]
+processSeed seed = foldl (\ranges trans -> createPipes trans =<< ranges) [seed]
+
+loadLocations :: Almanac -> [Range]
+loadLocations ([], _) = []
+loadLocations (seeds, transforms) = flip processSeed transforms =<< seeds
+
+day5_1 = show . minList . fmap fst . loadLocations . loadAlmanac loadSeeds . lines
+
+day5_2 = show . minList . fmap fst . loadLocations . loadAlmanac loadSeeds2 . lines
