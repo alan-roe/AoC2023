@@ -7,6 +7,7 @@ import Day4
 import Day5
 import Day6
 import Day7
+import Day8
 import Day9
 import System.Environment (getArgs)
 
@@ -19,7 +20,7 @@ days =
     (day5_1, day5_2),
     (day6_1, day6_2),
     (day7_1, day7_2),
-    (day6_1, day6_2),
+    (day8_1, day8_2),
     (day9_1, day9_2)
   ]
 

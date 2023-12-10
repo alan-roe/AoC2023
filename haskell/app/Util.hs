@@ -1,6 +1,7 @@
 module Util where
 
 import Data.List (elemIndex, findIndex, groupBy, isInfixOf, isPrefixOf, tails)
+import Data.Maybe (fromJust)
 
 -- Splits a list into a list of lists at each point that a occurs, discards the a token
 splitAtAll :: (Eq a) => a -> [a] -> [[a]]
@@ -32,3 +33,6 @@ indexOf sub str = findIndex (isPrefixOf sub) (tails str)
 
 pair :: [a] -> (a, a)
 pair [x, y] = (x, y)
+
+lookup' :: Eq a => a -> [(a, b)] -> b
+lookup' a = fromJust . lookup a
