@@ -1,6 +1,10 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module Day7 where
 
 import Control.Arrow ((&&&), (***))
+import Data.Char (digitToInt)
+import Data.List (group, sort, sortBy)
 import Util (pair, splitAtAll)
 
 data HandType
@@ -13,27 +17,32 @@ data HandType
   | FiveK
   deriving (Eq, Ord, Show)
 
-type Hand = (String, HandType)
-
 data Card
-  = Two
-  | Three 
-  | Four 
-  | Five 
-  | Six 
-  | Seven 
-  | Eight 
-  | Nine 
+  = Joker
+  | Two
+  | Three
+  | Four
+  | Five
+  | Six
+  | Seven
+  | Eight
+  | Nine
   | T
-  | J 
-  | Q 
+  | J
+  | Q
   | K
   | A
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Enum)
 
 type Bid = Int
 
+type Hand = ([Card], HandType)
+
 type Play = (Hand, Bid)
+
+type CardReader = Char -> Card
+
+type HandReader = String -> Hand
 
 test =
   [ "32T3K 765",
@@ -43,21 +52,47 @@ test =
     "QQQJA 483"
   ]
 
--- Five of a kind, where all five cards have the same label: AAAAA
--- Four of a kind, where four cards have the same label and one card has a different label: AA8AA
--- Full house, where three cards have the same label, and the remaining two cards share a different label: 23332
--- Three of a kind, where three cards have the same label, and the remaining two cards are each different from any other card in the hand: TTT98
--- Two pair, where two cards share one label, two other cards share a second label, and the remaining card has a third label: 23432
--- One pair, where two cards share one label, and the other three cards have a different label from the pair and each other: A23A4
--- High card, where all cards' labels are distinct: 23456
-loadHand :: String -> Hand
-loadHand hand@(c : cs) 
-  | all (== c) cs = (hand, FiveK)
+readCard :: Card -> CardReader
+readCard jCard c =
+  case c of
+    'T' -> T
+    'J' -> jCard
+    'Q' -> Q
+    'K' -> K
+    'A' -> A
+    _ -> toEnum $ digitToInt c - 1
 
+loadHand :: CardReader -> String -> Hand
+loadHand cr hand@(c : cs)
+  | all (== c) cs = (cards, FiveK)
+  | otherwise =
+      (,)
+        cards
+        ( case length grouped of
+            5 -> if [Joker] `elem` grouped then OneP else High
+            4 -> if [Joker] `elem` grouped || [Joker, Joker] `elem` grouped then ThreeK else OneP
+            3 ->
+              if any ((== 3) . length) grouped
+                then if replicate 3 Joker `elem` grouped || [Joker] `elem` grouped then FourK else ThreeK
+                else if [Joker] `elem` grouped then Full else if [Joker, Joker] `elem` grouped then FourK else TwoP
+            2 ->
+              if any ((== 4) . length) grouped
+                then if [Joker] `elem` grouped || replicate 4 Joker `elem` grouped then FiveK else FourK
+                else if replicate 2 Joker `elem` grouped || replicate 3 Joker `elem` grouped then FiveK else Full
+        )
+  where
+    grouped = (group . sort) cards
+    cards = fmap cr hand
 
-loadPlay :: String -> Play
-loadPlay = (loadHand *** read) . pair . words
+playSort :: Play -> Play -> Ordering
+playSort ((cards, handType), _) ((cards', handType'), _) =
+  if handType == handType'
+    then compare cards cards'
+    else compare handType handType'
 
-day7_1 s = show 0
+loadPlay :: HandReader -> String -> Play
+loadPlay f = (f *** read) . pair . words
 
-day7_2 s = show 0
+day7_1 = show . sum . fmap (uncurry (*)) . zip [1 ..] . fmap snd . sortBy playSort . fmap (loadPlay (loadHand (readCard J))) . lines
+
+day7_2 = show . sum . fmap (uncurry (*)) . zip [1 ..] . fmap snd . sortBy playSort . fmap (loadPlay (loadHand (readCard Joker))) . lines
