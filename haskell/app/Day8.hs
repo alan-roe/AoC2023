@@ -3,7 +3,6 @@ module Day8 where
 import Control.Monad (join)
 import Data.Map (Map)
 import Util (lookup')
-import Control.Parallel.Strategies (parMap, rpar)
 
 type Instructions = [Char]
 
@@ -41,24 +40,21 @@ loadNodes ([label, _, left, right] : rest) = (label, ((take 3 . drop 1) left, ta
 loadNetwork :: [String] -> Network
 loadNetwork (instructions : _ : nodes) = (instructions, loadNodes (fmap words nodes))
 
-aToZ' :: Network -> Label -> Int -> Int
-aToZ' (instruction : ins, nodes) label count = if nextLabel == "ZZZ" then count + 1 else aToZ' (ins, nodes) nextLabel count + 1
+aToZ' :: Network -> (String -> Bool) -> Label -> Int -> Int
+aToZ' (instruction : ins, nodes) f label count = if f nextLabel then count + 1 else aToZ' (ins, nodes) f nextLabel count + 1
   where
     nextLabel = (if instruction == 'L' then fst else snd) (lookup' label nodes)
 
 aToZ :: Network -> Int
-aToZ (instructions, nodes) = aToZ' ((join . repeat) instructions, nodes) "AAA" 0
+aToZ (instructions, nodes) = aToZ' ((join . repeat) instructions, nodes) (== "ZZZ") "AAA" 0
 
 findStarts :: [Node] -> [Label]
 findStarts nodes = filter (\s -> last s == 'A') (fmap fst nodes)
 
-traverseToZ' :: Network -> (String -> Bool) -> [Label] -> Int -> Int 
-traverseToZ' (instruction : instructions, nodes) f labels count = if all f nextLabels then count+1 else traverseToZ' (instructions, nodes) f nextLabels (count+1)
-  where
-    nextLabels = parMap rpar (\label -> (if instruction == 'L' then fst else snd) (lookup' label nodes)) labels
-
 traverseToZ :: Network -> Int
-traverseToZ (instructions, nodes) = traverseToZ' ((join . repeat) instructions, nodes) (\x -> last x == 'Z') (findStarts nodes) 0
+traverseToZ (instructions, nodes) =
+  foldl1 lcm $
+    fmap (\label -> aToZ' ((join . repeat) instructions, nodes) (\x -> last x == 'Z') label 0) (findStarts nodes)
 
 day8_1 = show . aToZ . loadNetwork . lines
 

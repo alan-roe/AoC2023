@@ -37,6 +37,6 @@ executable Ao2023
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base >=4.16.4.0, containers, Cabal, bytestring, vector, transformers, raw-strings-qq, parallel
+    build-depends:    base >=4.16.4.0, containers, Cabal, bytestring, vector, transformers, raw-strings-qq
     hs-source-dirs:   app
     default-language: Haskell2010
