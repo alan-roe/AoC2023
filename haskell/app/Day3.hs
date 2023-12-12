@@ -1,3 +1,6 @@
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MonoLocalBinds #-}
 module Day3 where
 
 import Data.Char (isDigit)
@@ -6,11 +9,28 @@ import Data.Maybe (mapMaybe)
 import Grid
 import Util (replace)
 
-type Schematic = Grid
+type Schematic = Grid Element
 
 type PartNumber = Int
 
 type GearRatio = Int
+
+data Sym
+  = Gear
+  | Other
+  deriving (Eq, Show)
+
+data Element
+  = Number Int
+  | Symbol Sym
+  deriving (Eq, Show)
+
+instance GridElement Element where
+  width (Symbol _) = 1
+  width (Number n)
+    | n < 10 = 1
+    | n < 100 = 2
+    | n < 10000 = 3
 
 test :: [String]
 test =
@@ -26,17 +46,26 @@ test =
     ".664.598.."
   ]
 
+number :: Int -> Element
+number = Number
+
+symbol :: Element
+symbol = Symbol Other
+
+gear :: Element
+gear = Symbol Gear
+
 partNumbers :: Schematic -> [PartNumber]
 partNumbers schem = (mapMaybe validParts . toList) schem
   where
-    validParts :: ((Int, Int), GridElement) -> Maybe PartNumber
+    validParts :: ((Int, Int), Element) -> Maybe PartNumber
     validParts ((x, y), Number n) = if any isSymbol (neighbours (x, y) schem) then Just n else Nothing
     validParts (_, Symbol sym) = Nothing
 
 gearRatios :: Schematic -> [GearRatio]
 gearRatios schem = (mapMaybe ratios . toList) schem
   where
-    ratios :: ((Int, Int), GridElement) -> Maybe GearRatio
+    ratios :: ((Int, Int), Element) -> Maybe GearRatio
     ratios ((x, y), Symbol sym) =
       case sym of
         Gear ->
@@ -48,14 +77,14 @@ gearRatios schem = (mapMaybe ratios . toList) schem
         nums = filter isNumber (neighbours (x, y) schem)
     ratios _ = Nothing
 
-getNumber :: GridElement -> Int
+getNumber :: Element -> Int
 getNumber (Number n) = n
 
-isNumber :: GridElement -> Bool
+isNumber :: Element -> Bool
 isNumber (Number _) = True
 isNumber _ = False
 
-isSymbol :: GridElement -> Bool
+isSymbol :: Element -> Bool
 isSymbol (Symbol _) = True
 isSymbol _ = False
 

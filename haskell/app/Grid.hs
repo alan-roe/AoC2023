@@ -1,74 +1,48 @@
-{-# LANGUAGE TupleSections #-}
-
+{-# LANGUAGE RankNTypes #-}
 module Grid where
 
-import Control.Monad (join)
-import Data.Map as M (Map, insert, lookup, (!))
-import Data.Maybe (mapMaybe)
+import Data.Map as M (Map, elems, filterWithKey, insert, lookup, (!))
 
-type Grid = (Map (Int, Int) GridElement)
+type Grid a = GridElement a => Map (Int, Int) a
 
-data Sym
-  = Gear
-  | Other
-  deriving (Eq, Show)
-
-data GridElement
-  = Number Int
-  | Symbol Sym
-  deriving (Eq, Show)
-
-width :: GridElement -> Int
-width (Symbol _) = 1
-width (Number n)
-  | n < 10 = 1
-  | n < 100 = 2
-  | n < 10000 = 3
+class GridElement a where
+  width :: a -> Int
 
 insert ::
+  (GridElement a) =>
   (Int, Int) -> -- x, y
-  GridElement ->
-  Grid ->
-  Grid
+  a ->
+  Grid a ->
+  Grid a
 insert pos@(x, y) = M.insert pos
 
-empty :: Grid
+empty :: (GridElement a) => Grid a
 empty = mempty
 
-number :: Int -> GridElement
-number = Number
-
-symbol :: GridElement
-symbol = Symbol Other
-
-gear :: GridElement
-gear = Symbol Gear
-
 get ::
+  (GridElement a) =>
   (Int, Int) ->
-  Grid ->
-  Maybe GridElement
+  Grid a ->
+  Maybe a
 get = M.lookup
 
 get' ::
+  (GridElement a) =>
   (Int, Int) ->
-  Grid ->
-  GridElement
+  Grid a ->
+  a
 get' = flip (M.!)
 
 neighbours ::
+  (GridElement a) =>
   (Int, Int) ->
-  Grid ->
-  [GridElement]
-neighbours pos@(x, y) g =
-  case get pos g of
-    Just el@(Number n) ->
-      mapMaybe (`get` g) ([(x - 1, y), (x + w, y)] ++ map (,y - 1) xs ++ map (,y + 1) xs)
-      where
-        xs = [x - 1 .. x + w]
-        w = width el
-    Just el@(Symbol sym) ->
-      mapMaybe symbolNeighbours (map (,y) [x - 3 .. x - 1] ++ [(x + 1, y)] ++ map (,y - 1) [x - 3 .. x + 1] ++ map (,y + 1) [x - 3 .. x + 1])
-      where
-        symbolNeighbours pos = if el `elem` neighbours pos g then Just (get' pos g) else Nothing
-    Nothing -> []
+  Grid a ->
+  [a]
+neighbours pos@(x, y) g = elems $ filterWithKey neighbourFilter g
+  where
+    neighbourFilter :: (GridElement a) => (Int, Int) -> a -> Bool
+    neighbourFilter npos@(nx, ny) nel =
+      npos /= pos
+        && (ny == y - 1 || ny == y || ny == y + 1)
+        && any (`elem` [x - 1 .. x + width el]) [nx .. nx + width nel - 1]
+    el = get' pos g
