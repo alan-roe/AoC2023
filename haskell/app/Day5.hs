@@ -106,6 +106,6 @@ loadLocations :: Almanac -> [Range]
 loadLocations ([], _) = []
 loadLocations (seeds, transforms) = flip processSeed transforms =<< seeds
 
-day5_1 = show . minList . fmap fst . loadLocations . loadAlmanac loadSeeds . lines
+day5_1 = show . minimum . fmap fst . loadLocations . loadAlmanac loadSeeds . lines
 
-day5_2 = show . minList . fmap fst . loadLocations . loadAlmanac loadSeeds2 . lines
+day5_2 = show . minimum . fmap fst . loadLocations . loadAlmanac loadSeeds2 . lines

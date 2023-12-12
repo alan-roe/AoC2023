@@ -4,7 +4,7 @@ module Day11 where
 
 import Data.List (findIndices)
 import Text.RawString.QQ
-import Util (maxList, uniquePairs)
+import Util (uniquePairs)
 
 type Universe = [(Int, Int)]
 

@@ -26,9 +26,6 @@ mcons :: Maybe a -> [a] -> [a]
 mcons (Just x) ys = x : ys
 mcons Nothing ys = ys
 
-minList :: (Ord a) => [a] -> a
-minList (x : xs) = foldl min x xs
-
 indexOf :: (Eq a) => [a] -> [a] -> Maybe Int
 indexOf sub str = findIndex (isPrefixOf sub) (tails str)
 
