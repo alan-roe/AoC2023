@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 module Util where
 
 import Data.List (elemIndex, findIndex, groupBy, isInfixOf, isPrefixOf, tails)
@@ -36,3 +37,7 @@ pair [x, y] = (x, y)
 
 lookup' :: Eq a => a -> [(a, b)] -> b
 lookup' a = fromJust . lookup a
+
+uniquePairs :: [a] -> [(a, a)]
+uniquePairs [] = []
+uniquePairs xs = map (head xs,) (tail xs) ++ uniquePairs (tail xs)

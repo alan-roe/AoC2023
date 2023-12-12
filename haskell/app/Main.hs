@@ -9,6 +9,7 @@ import Day6
 import Day7
 import Day8
 import Day9
+import Day11
 import System.Environment (getArgs)
 
 days :: [(String -> String, String -> String)]
@@ -21,7 +22,9 @@ days =
     (day6_1, day6_2),
     (day7_1, day7_2),
     (day8_1, day8_2),
-    (day9_1, day9_2)
+    (day9_1, day9_2),
+    (day9_1, day9_2),
+    (day11_1, day11_2)
   ]
 
 day :: String -> IO ()
